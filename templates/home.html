@@ -1,0 +1,36 @@
+{{define "title"}} {{ .Title }} {{end}}
+
+{{define "body"}}
+<div>
+    <div class="title">
+        Привет, {{ .Player.DisplayName }}!
+    </div>
+
+    <div class="rater-form">
+        <form action="/rate/" method="post">
+            {{range $player := .Players}}
+            <div class="form-wrapper">
+                <span> {{ $player.DisplayName }} </span>
+                <input type="radio" name="rating[{{ $player.Email }}]" value="1" {{ if eq $player.Rating 1.00 }} checked {{ end }} /> 1
+                <input type="radio" name="rating[{{ $player.Email }}]" value="2" {{ if eq $player.Rating 2.00 }} checked {{ end }} /> 2
+                <input type="radio" name="rating[{{ $player.Email }}]" value="3" {{ if eq $player.Rating 3.00 }} checked {{ end }} /> 3
+                <input type="radio" name="rating[{{ $player.Email }}]" value="4" {{ if eq $player.Rating 4.00 }} checked {{ end }} /> 4
+                <input type="radio" name="rating[{{ $player.Email }}]" value="5" {{ if eq $player.Rating 5.00 }} checked {{ end }} /> 5
+                <input type="radio" name="rating[{{ $player.Email }}]" value="6" {{ if eq $player.Rating 6.00 }} checked {{ end }} /> 6
+                <input type="radio" name="rating[{{ $player.Email }}]" value="7" {{ if eq $player.Rating 7.00 }} checked {{ end }} /> 7
+                <input type="radio" name="rating[{{ $player.Email }}]" value="8" {{ if eq $player.Rating 8.00 }} checked {{ end }} /> 8
+                <input type="radio" name="rating[{{ $player.Email }}]" value="9" {{ if eq $player.Rating 9.00 }} checked {{ end }} /> 9
+                <input type="radio" name="rating[{{ $player.Email }}]" value="10" {{ if eq $player.Rating 10.00 }} checked {{ end }} /> 10
+            </div>
+            {{ end }}
+            <div class="button">
+                <input type="submit" value="Отправить" />
+            </div>
+        </form>
+    </div>
+
+    <div class="logout">
+        <a href="/logout/">Выйти</a>
+    </div>
+</div>
+{{end}}
