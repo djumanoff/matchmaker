@@ -10,11 +10,12 @@
 ## Getting Started
 
 1. Go to root directory
-2. Run:
+2. Run sql init queries in `init.sql` file
+3. Run:
  
     `go get`
      
-3. Edit `config.env` file then run command: 
+4. Edit `config.env` file then run command: 
 
     `go run main.go -c=config.env`
     
