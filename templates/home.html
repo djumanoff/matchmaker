@@ -63,7 +63,7 @@
                     <td>{{ $match.NumberOfPlayersPerTeam }}</td>
                     <td>{{ $match.NumberOfTeams }}</td>
                     <td>
-                        {{ if .RegIds[$match.MatchID] }}
+                        {{ if eq (index $.RegIds $match.MatchID) (true)}}
                             <a href="/matches/{{$match.MatchID}}/unregister">отменить регистрацию</a> |
                         {{ else }}
                             <a href="/matches/{{$match.MatchID}}/register">зарегаться</a> |

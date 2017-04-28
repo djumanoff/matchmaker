@@ -19,6 +19,7 @@ func initRoutes(app *iris.Framework) {
 	app.Post("/matches", PostMatches)
 
 	app.Get("/matches/:matchId/register", GetMatchesRegister)
+	app.Get("/matches/:matchId/unregister", GetMatchesUnregister)
 	app.Get("/matches/:matchId/registered", GetMatchesRegistered)
 
 	app.Get("/matches/:matchId/make-teams", GetMatchesMakeTeams)

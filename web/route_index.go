@@ -42,11 +42,15 @@ func GetHome(ctx *iris.Context) {
 		return
 	}
 
-	ctx.Render("home.html", iris.Map{
+	err = ctx.Render("home.html", iris.Map{
 		"Name": name,
 		"Email": email,
 		"Players": players,
 		"Matches": matches,
 		"RegIds": regIds,
 	}, iris.RenderOptions{"gzip": false})
+
+	if err != nil {
+		log.Println(err.Error())
+	}
 }

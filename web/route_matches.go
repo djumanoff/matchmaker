@@ -77,6 +77,34 @@ func GetMatchesMakeTeams(ctx *iris.Context) {
 	ctx.Redirect("/matches/" + matchId + "/teams")
 }
 
+func GetMatchesUnregister(ctx *iris.Context) {
+	name := ctx.Session().GetString("name")
+	email := ctx.Session().GetString("email")
+
+	if name == "" || email == "" {
+		log.Println("User not authorized")
+		ctx.Redirect("/login")
+		return
+	}
+
+	matchId := ctx.Param("matchId")
+	mId, err := strconv.ParseInt(matchId, 10, 64)
+	if err != nil {
+		log.Println("Wrong match id " + matchId)
+		ctx.Redirect("/home")
+		return
+	}
+
+	err = matchMaker.UnregisterForMatch(mId, email)
+	if err != nil {
+		log.Println("Database error " + err.Error())
+		ctx.Redirect("/home")
+		return
+	}
+
+	ctx.Redirect("/matches/" + matchId + "/registered")
+}
+
 func GetMatchesRegister(ctx *iris.Context) {
 	name := ctx.Session().GetString("name")
 	email := ctx.Session().GetString("email")
