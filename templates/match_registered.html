@@ -1,0 +1,18 @@
+<div class="registered-players-table">
+    <table>
+        <thead>
+        <tr>
+            <td>Email</td>
+            <td>Имя</td>
+        </tr>
+        </thead>
+        <tbody>
+        {{range $player := .Players}}
+        <tr>
+            <td>{{ $player.Email }}</td>
+            <td>{{ $player.DisplayName }}</td>
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+</div>

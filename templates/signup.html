@@ -1,15 +1,11 @@
-{{define "title"}} Регистрация {{end}}
-
-{{define "body"}}
 <div>
-    <form action="/signup/" method="post">
-        <input type="text" name="email" value="{{ .Email }}" />
-        <input type="text" name="displayName" value="{{ .DisplayName }}" />
+    <form action="/signup" method="post">
+        <input type="text" name="Email" value="{{ .Email }}" />
+        <input type="text" name="DisplayName" value="{{ .DisplayName }}" />
 
-        <input type="text" name="password" value="" />
-        <input type="text" name="confirmPassword" value="" />
+        <input type="text" name="Password" value="" />
+        <input type="text" name="ConfirmPassword" value="" />
 
         <input type="submit" value="Зарегистрироваться" />
     </form>
 </div>
-{{end}}

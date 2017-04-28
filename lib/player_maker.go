@@ -43,9 +43,9 @@ func validateEmail(email string) error {
 }
 
 func validatePlayer(player *Player) error {
-	if err := validateEmail(player.Email); err != nil {
-		return err
-	}
+	//if err := validateEmail(player.Email); err != nil {
+	//	return err
+	//}
 	if player.DisplayName == "" {
 		return ErrBadRequest
 	}

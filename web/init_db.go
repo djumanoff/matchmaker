@@ -1,9 +1,9 @@
 package web
 
-import "github.com/djumanoff/team-builder/builder"
+import "github.com/djumanoff/matchmaker/lib"
 
-var matchMaker = &builder.MatchMaker{}
-var playerMaker = &builder.PlayerMaker{}
+var matchMaker = &lib.MatchMaker{}
+var playerMaker = &lib.PlayerMaker{}
 
 func connectDb(cfg Config) error {
 	err := matchMaker.Connect(cfg.DatabseUri)
