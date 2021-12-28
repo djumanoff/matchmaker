@@ -1,19 +1,19 @@
-package lib
+package matchmaker
 
 import (
 	"database/sql"
+	"github.com/badoux/checkmail"
 	_ "github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
-	"github.com/badoux/checkmail"
 	"sync"
 
 	"errors"
 )
 
 var (
-	ErrNotFound = errors.New("Item not found")
-	ErrBadRequest = errors.New("Bad request")
-	ErrPlayerAlredyExists = errors.New("Player already exists")
+	ErrNotFound           = errors.New("item not found")
+	ErrBadRequest         = errors.New("bad request")
+	ErrPlayerAlredyExists = errors.New("player already exists")
 )
 
 type (
@@ -53,12 +53,12 @@ func validatePlayer(player *Player) error {
 	return nil
 }
 
-func (tb *PlayerMaker) Signup(player *Player, password string) error {
+func (tb *PlayerMaker) Signup(player *Player) error {
 	if err := validatePlayer(player); err != nil {
 		return err
 	}
 
-	if err := validatePassword(password); err != nil {
+	if err := validatePassword(player.Password); err != nil {
 		return err
 	}
 
@@ -67,7 +67,7 @@ func (tb *PlayerMaker) Signup(player *Player, password string) error {
 		return ErrPlayerAlredyExists
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(player.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (tb *PlayerMaker) Signup(player *Player, password string) error {
 		return err
 	}
 
-	_, err = tx.Exec("INSERT INTO players (email, displayName, password, rating, ratingCount) VALUES " +
+	_, err = tx.Exec("INSERT INTO players (email, displayName, password, rating, ratingCount) VALUES "+
 		"(?, ?, ?, ?, ?)",
 		player.Email, player.DisplayName, hashedPassword, 0.0, 0)
 
@@ -134,7 +134,7 @@ func (tb *PlayerMaker) Login(email, password string) (*Player, error) {
 	return player, nil
 }
 
-func (tb *PlayerMaker) ListPlayersToRate(player *Player) ([]PlayerInfo, error) {
+func (tb *PlayerMaker) ListPlayersToRate(player *Player) ([]*PlayerInfo, error) {
 	rows, err := tb.db.Query(`
 		SELECT email, displayName, r.rating FROM players AS p
 		LEFT JOIN ratings AS r ON p.email = r.rateeEmail AND r.raterEmail = ?
@@ -145,18 +145,18 @@ func (tb *PlayerMaker) ListPlayersToRate(player *Player) ([]PlayerInfo, error) {
 		return nil, err
 	}
 
-	players := []PlayerInfo{}
+	players := []*PlayerInfo{}
 
 	for rows.Next() {
 		var email, displayName string
 		var rating float32
 		var ratingCount int
 
-		rows.Scan(&email, &displayName, &rating);
+		rows.Scan(&email, &displayName, &rating)
 
-		players = append(players, PlayerInfo{
-			Email: email,
-			Rating: rating,
+		players = append(players, &PlayerInfo{
+			Email:       email,
+			Rating:      rating,
 			RatingCount: ratingCount,
 			DisplayName: displayName,
 		})
@@ -186,7 +186,7 @@ func (tb *PlayerMaker) GetAvgRate(rateeEmail string) (int, float32, error) {
 	return cnt, avg, nil
 }
 
-func (tb *PlayerMaker) RatePlayer(raterEmail, rateeEmail string, rate int) error {
+func (tb *PlayerMaker) RatePlayer(raterEmail, rateeEmail string, rate int) (err error) {
 	rateFloat := float32(rate)
 
 	ratee, err := tb.getPlayerByEmail(rateeEmail)
@@ -198,44 +198,43 @@ func (tb *PlayerMaker) RatePlayer(raterEmail, rateeEmail string, rate int) error
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
 
 	var rating float32
-	err = tx.QueryRow("SELECT rateeEmail, raterEmail, rating FROM ratings " +
+	err = tx.QueryRow("SELECT rateeEmail, raterEmail, rating FROM ratings "+
 		"WHERE rateeEmail = ? AND raterEmail = ?", rateeEmail, raterEmail).
 		Scan(&rateeEmail, &raterEmail, &rating)
 
 	if err == sql.ErrNoRows {
 		_, err = tb.db.Exec("INSERT INTO ratings (rateeEmail, raterEmail, rating) VALUES (?, ?, ?)", ratee.Email, raterEmail, rateFloat)
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 	} else if err == nil {
 		_, err = tb.db.Exec("UPDATE ratings SET rating = ? WHERE rateeEmail = ? AND raterEmail = ?", rateFloat, ratee.Email, raterEmail)
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 	} else {
-		tx.Rollback()
 		return err
 	}
 
 	rateCount, rating, err := tb.GetAvgRate(rateeEmail)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	_, err = tx.Exec("UPDATE players SET rating = ?, ratingCount = ? WHERE email = ?", rating, rateCount, rateeEmail)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
@@ -259,4 +258,8 @@ func (tb *PlayerMaker) Connect(sqlUri string) error {
 
 func (tb *PlayerMaker) Close() error {
 	return tb.db.Close()
+}
+
+func (tb *PlayerMaker) Health() error {
+	return tb.db.Ping()
 }

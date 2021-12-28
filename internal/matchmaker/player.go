@@ -1,4 +1,4 @@
-package lib
+package matchmaker
 
 import (
 	"sync"
@@ -7,18 +7,18 @@ import (
 type (
 	Player struct {
 		DisplayName string
-		Email string
-		Password string
+		Email       string
+		Password    string
 
-		mu sync.Mutex
-		Rating float32
+		mu          sync.Mutex
+		Rating      float32
 		RatingCount int
 	}
 
 	PlayerInfo struct {
 		DisplayName string
-		Email string
-		Rating float32
+		Email       string
+		Rating      float32
 		RatingCount int
 	}
 

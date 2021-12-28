@@ -1,18 +1,18 @@
-package lib
+package matchmaker
 
 import (
-	"time"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"time"
 
 	"errors"
 	"log"
 )
 
 var (
-	ErrMatchPassed = errors.New("Match was already played")
-	ErrMatchIsFull = errors.New("Match players already stacked")
-	ErrWrongNumberOfPlayers = errors.New("Number of players should be even to number of teams")
+	ErrMatchPassed          = errors.New("match was already played")
+	ErrMatchIsFull          = errors.New("match players already stacked")
+	ErrWrongNumberOfPlayers = errors.New("number of players should be even to number of teams")
 )
 
 type (
@@ -23,10 +23,10 @@ type (
 	Match struct {
 		MatchID int64
 
-		NumberOfTeams int
+		NumberOfTeams          int
 		NumberOfPlayersPerTeam int
-		TotalPlayers int
-		RegCount int
+		TotalPlayers           int
+		RegCount               int
 
 		Rating float32
 
@@ -36,12 +36,12 @@ type (
 	}
 
 	MatchPlayers struct {
-		MatchID int64
+		MatchID   int64
 		UserEmail string
 	}
 )
 
-func (mm *MatchMaker) GetUpcomingMatches() ([]Match, error) {
+func (mm *MatchMaker) GetUpcomingMatches() ([]*Match, error) {
 	rows, err := mm.db.Query(`SELECT m.matchId, numOfTeams, numOfPlayersPerTeam, totalPlayers, date, rating, COUNT(mp.playerEmail) AS regCount
 		FROM matches AS m
 		LEFT JOIN matchPlayers AS mp ON m.matchId = mp.matchId
@@ -53,7 +53,7 @@ func (mm *MatchMaker) GetUpcomingMatches() ([]Match, error) {
 		return nil, err
 	}
 
-	matches := []Match{}
+	matches := []*Match{}
 
 	for rows.Next() {
 		var matchId int64
@@ -70,14 +70,14 @@ func (mm *MatchMaker) GetUpcomingMatches() ([]Match, error) {
 			return nil, err
 		}
 
-		matches = append(matches, Match{
-			MatchID: matchId,
-			Rating: rating,
-			NumberOfTeams: numOfTeams,
+		matches = append(matches, &Match{
+			MatchID:                matchId,
+			Rating:                 rating,
+			NumberOfTeams:          numOfTeams,
 			NumberOfPlayersPerTeam: numOfPlayersPerTeam,
-			TotalPlayers: totalPlayers,
-			Date: timeVal,
-			RegCount: regCount,
+			TotalPlayers:           totalPlayers,
+			Date:                   timeVal,
+			RegCount:               regCount,
 		})
 	}
 
@@ -87,8 +87,8 @@ func (mm *MatchMaker) GetUpcomingMatches() ([]Match, error) {
 func (mm *MatchMaker) CreateMatch(date time.Time, numberOfTeams, numberOfPlayersPerTeam int) (*Match, error) {
 	match := &Match{
 		NumberOfPlayersPerTeam: numberOfPlayersPerTeam,
-		NumberOfTeams: numberOfTeams,
-		Date: date,
+		NumberOfTeams:          numberOfTeams,
+		Date:                   date,
 	}
 	match.TotalPlayers = numberOfTeams * numberOfPlayersPerTeam
 
@@ -130,12 +130,12 @@ func (mm *MatchMaker) GetMatchById(matchID int64) (*Match, error) {
 	}
 
 	return &Match{
-		MatchID: matchID,
+		MatchID:                matchID,
 		NumberOfPlayersPerTeam: numOfPlayersPerTeam,
-		NumberOfTeams: numOfTeams,
-		TotalPlayers: totalPlayers,
-		Date: timeVal,
-		Rating: rating,
+		NumberOfTeams:          numOfTeams,
+		TotalPlayers:           totalPlayers,
+		Date:                   timeVal,
+		Rating:                 rating,
 	}, nil
 }
 
@@ -150,7 +150,7 @@ func (mm *MatchMaker) GetNumberOfRegisteredPlayers(matchID int64) (int, error) {
 	return numOfRegPlayers, nil
 }
 
-func (mm *MatchMaker) GetMatchPlayers(match *Match) ([]PlayerInfo, error) {
+func (mm *MatchMaker) GetMatchPlayers(match *Match) ([]*PlayerInfo, error) {
 	rows, err := mm.db.Query(`SELECT email, rating, ratingCount, displayName FROM players AS p
 		LEFT JOIN matchPlayers AS mp ON p.email = mp.playerEmail
 		WHERE mp.matchId = ? ORDER BY rating DESC`, match.MatchID)
@@ -159,7 +159,7 @@ func (mm *MatchMaker) GetMatchPlayers(match *Match) ([]PlayerInfo, error) {
 		return nil, err
 	}
 
-	players := []PlayerInfo{}
+	players := []*PlayerInfo{}
 
 	for rows.Next() {
 		var email, displayName string
@@ -170,9 +170,9 @@ func (mm *MatchMaker) GetMatchPlayers(match *Match) ([]PlayerInfo, error) {
 			return nil, err
 		}
 
-		players = append(players, PlayerInfo{
-			Email: email,
-			Rating: rating,
+		players = append(players, &PlayerInfo{
+			Email:       email,
+			Rating:      rating,
 			RatingCount: ratingCount,
 			DisplayName: displayName,
 		})
@@ -181,25 +181,25 @@ func (mm *MatchMaker) GetMatchPlayers(match *Match) ([]PlayerInfo, error) {
 	return players, nil
 }
 
-func (mm *MatchMaker) FormTeams(players []PlayerInfo, numOfTeams int) ([]Team) {
+func (mm *MatchMaker) FormTeams(players []*PlayerInfo, numOfTeams int) []Team {
 	teams := make([]Team, numOfTeams)
 
 	i := 0
 	j := len(players) - 1
 	t := 0
 
-	evenNumPlayers := len(players) % 2 == 0
+	evenNumPlayers := len(players)%2 == 0
 
 	for i < j {
 		for t = 0; t < numOfTeams; t++ {
-			if j - i > numOfTeams - 1 || evenNumPlayers {
-				teams[t].AddPlayer(players[i])
-				teams[t].AddPlayer(players[j])
+			if j-i > numOfTeams-1 || evenNumPlayers {
+				teams[t].AddPlayer(*players[i])
+				teams[t].AddPlayer(*players[j])
 				rate := players[i].Rating + players[j].Rating
 				teams[t].Rating += rate
 				j--
 			} else {
-				teams[t].AddPlayer(players[i])
+				teams[t].AddPlayer(*players[i])
 				teams[t].Rating += players[i].Rating
 			}
 			i++
@@ -239,8 +239,8 @@ func (mm *MatchMaker) GetTeams(match *Match) (map[int64]*Team, error) {
 		}
 
 		player := PlayerInfo{
-			Email: email,
-			Rating: rating,
+			Email:       email,
+			Rating:      rating,
 			DisplayName: displayName,
 		}
 		team, ok := teams[teamId]
@@ -352,9 +352,9 @@ func (mm *MatchMaker) GetRegisteredPlayers(matchID int64) ([]PlayerInfo, error) 
 		}
 
 		players = append(players, PlayerInfo{
-			Email: email,
+			Email:       email,
 			DisplayName: displayName,
-			Rating: rating,
+			Rating:      rating,
 		})
 	}
 
@@ -427,6 +427,8 @@ func (mm *MatchMaker) RegisterForMatch(matchID int64, playerEmail string) error 
 	return nil
 }
 
+var initQueries = []string{"CREATE TABLE IF NOT EXISTS `matches` (`matchId` int(11) unsigned NOT NULL AUTO_INCREMENT, `numOfTeams` int(11) NOT NULL DEFAULT '0', `numOfPlayersPerTeam` int(11) NOT NULL DEFAULT '0', `totalPlayers` int(11) NOT NULL DEFAULT '0', `date` datetime DEFAULT NULL,`rating` float(8,2) NOT NULL DEFAULT '0.00', PRIMARY KEY (`matchId`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", "CREATE TABLE IF NOT EXISTS `matchPlayers` (`matchId` int(11) unsigned NOT NULL DEFAULT '0',  `playerEmail` varchar(255) NOT NULL DEFAULT '',  PRIMARY KEY (`matchId`,`playerEmail`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", "CREATE TABLE IF NOT EXISTS `players` (`email` varchar(255) NOT NULL DEFAULT '', `displayName` varchar(255) NOT NULL DEFAULT '',  `password` varchar(255) NOT NULL DEFAULT '',  `rating` float(8,2) NOT NULL DEFAULT '0.00',  `ratingCount` int(11) NOT NULL DEFAULT '0',  PRIMARY KEY (`email`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", "CREATE TABLE IF NOT EXISTS `ratings` (  `rateeEmail` varchar(255) NOT NULL DEFAULT '',  `raterEmail` varchar(255) NOT NULL DEFAULT '',  `rating` float(8,2) NOT NULL DEFAULT '0.00',  PRIMARY KEY (`rateeEmail`,`raterEmail`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", "CREATE TABLE IF NOT EXISTS `teamPlayers` (  `teamId` int(11) unsigned NOT NULL DEFAULT '0',  `playerEmail` varchar(255) NOT NULL DEFAULT '',  `matchId` int(11) unsigned NOT NULL DEFAULT '0',  PRIMARY KEY (`teamId`,`playerEmail`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;", "CREATE TABLE IF NOT EXISTS `teams` (  `teamId` int(11) unsigned NOT NULL AUTO_INCREMENT,  `name` varchar(255) NOT NULL DEFAULT '',  `rating` float(8,2) NOT NULL DEFAULT '0.00',  `matchId` int(11) unsigned NOT NULL DEFAULT '0',  PRIMARY KEY (`teamId`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;"}
+
 func (mm *MatchMaker) Connect(sqlUri string) error {
 	db, err := sql.Open("mysql", sqlUri)
 	if err != nil {
@@ -438,10 +440,18 @@ func (mm *MatchMaker) Connect(sqlUri string) error {
 		return err
 	}
 
+	for _, q := range initQueries {
+		_, err = db.Exec(q)
+	}
+
 	mm.db = db
 	return nil
 }
 
 func (mm *MatchMaker) Close() error {
 	return mm.db.Close()
+}
+
+func (mm *MatchMaker) Health() error {
+	return mm.db.Ping()
 }

@@ -1,16 +1,16 @@
-package lib
+package matchmaker
 
 type (
 	Team struct {
 		TeamID int64
-		Name string
+		Name   string
 		Rating float32
 
 		Players []PlayerInfo
 	}
 
 	TeamPlayers struct {
-		TeamID int64
+		TeamID      int64
 		PlayerEmail string
 	}
 )

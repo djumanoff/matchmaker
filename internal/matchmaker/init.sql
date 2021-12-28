@@ -1,4 +1,4 @@
-CREATE TABLE `matches` (
+CREATE TABLE IF NOT EXISTS `matches` (
   `matchId` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `numOfTeams` int(11) NOT NULL DEFAULT '0',
   `numOfPlayersPerTeam` int(11) NOT NULL DEFAULT '0',
@@ -8,13 +8,13 @@ CREATE TABLE `matches` (
   PRIMARY KEY (`matchId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `matchPlayers` (
+CREATE TABLE IF NOT EXISTS `matchPlayers` (
   `matchId` int(11) unsigned NOT NULL DEFAULT '0',
   `playerEmail` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`matchId`,`playerEmail`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `players` (
+CREATE TABLE IF NOT EXISTS `players` (
   `email` varchar(255) NOT NULL DEFAULT '',
   `displayName` varchar(255) NOT NULL DEFAULT '',
   `password` varchar(255) NOT NULL DEFAULT '',
@@ -23,21 +23,21 @@ CREATE TABLE `players` (
   PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `ratings` (
+CREATE TABLE IF NOT EXISTS `ratings` (
   `rateeEmail` varchar(255) NOT NULL DEFAULT '',
   `raterEmail` varchar(255) NOT NULL DEFAULT '',
   `rating` float(8,2) NOT NULL DEFAULT '0.00',
   PRIMARY KEY (`rateeEmail`,`raterEmail`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `teamPlayers` (
+CREATE TABLE IF NOT EXISTS `teamPlayers` (
   `teamId` int(11) unsigned NOT NULL DEFAULT '0',
   `playerEmail` varchar(255) NOT NULL DEFAULT '',
   `matchId` int(11) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`teamId`,`playerEmail`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE `teams` (
+CREATE TABLE IF NOT EXISTS `teams` (
   `teamId` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `rating` float(8,2) NOT NULL DEFAULT '0.00',
