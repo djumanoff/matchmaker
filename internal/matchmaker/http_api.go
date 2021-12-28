@@ -128,6 +128,19 @@ func (api *App) GetMatchTeams(r *http.Request) l00p8.Response {
 	return l00p8.OK(teams)
 }
 
+func (api *App) GetMatch(r *http.Request) l00p8.Response {
+	matchId := l00p8.URLParam(r, "matchId")
+	mId, err := strconv.ParseInt(matchId, 10, 64)
+	if err != nil {
+		return api.errSys.BadRequest(410, err.Error())
+	}
+	match, err := api.mm.GetMatch(mId)
+	if err != nil {
+		return api.errSys.BadRequest(400, err.Error())
+	}
+	return l00p8.OK(match)
+}
+
 func (api *App) GetMatches(r *http.Request) l00p8.Response {
 	matches, err := api.mm.GetUpcomingMatches()
 	if err != nil {

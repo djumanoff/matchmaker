@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/djumanoff/matchmaker/internal/matchmaker"
+	"github.com/go-chi/cors"
 	"github.com/l00p8/cfg"
 	"github.com/l00p8/l00p8"
 	"github.com/l00p8/log"
@@ -145,11 +146,23 @@ func run(c *cli.Context) error {
 
 	mw := l00p8.NewMiddlewareFactory(vld, errSys)
 
+	router.Mux().Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	// init routes
-	router.Post("/login", app.Login)
-	router.Post("/signup", app.Signup)
+	router.Post("/users/login", app.Login)
+	router.Post("/users/signup", app.Signup)
 
 	router.Get("/matches", app.GetMatches)
+	router.Get("/matches/{matchId}", app.GetMatch)
 	router.Get("/matches/{matchId}/teams", app.GetMatchTeams)
 
 	router.Post("/matches", mw.Auth(app.CreateMatches))

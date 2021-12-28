@@ -41,6 +41,38 @@ type (
 	}
 )
 
+func (mm *MatchMaker) GetMatch(matchId int64) (*Match, error) {
+	row := mm.db.QueryRow(`SELECT m.matchId, numOfTeams, numOfPlayersPerTeam, totalPlayers, date, rating, COUNT(mp.playerEmail) AS regCount
+		FROM matches AS m
+		LEFT JOIN matchPlayers AS mp ON m.matchId = mp.matchId
+		WHERE m.matchId = ?
+		GROUP BY m.matchId
+		ORDER BY date ASC`, matchId)
+
+	var numOfTeams, numOfPlayersPerTeam, totalPlayers, regCount int
+	var date string
+	var rating float32
+
+	if err := row.Scan(&matchId, &numOfTeams, &numOfPlayersPerTeam, &totalPlayers, &date, &rating, &regCount); err != nil {
+		return nil, err
+	}
+
+	timeVal, err := time.Parse("2006-01-02 15:04:05", date)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Match{
+		MatchID:                matchId,
+		Rating:                 rating,
+		NumberOfTeams:          numOfTeams,
+		NumberOfPlayersPerTeam: numOfPlayersPerTeam,
+		TotalPlayers:           totalPlayers,
+		Date:                   timeVal,
+		RegCount:               regCount,
+	}, nil
+}
+
 func (mm *MatchMaker) GetUpcomingMatches() ([]*Match, error) {
 	rows, err := mm.db.Query(`SELECT m.matchId, numOfTeams, numOfPlayersPerTeam, totalPlayers, date, rating, COUNT(mp.playerEmail) AS regCount
 		FROM matches AS m
